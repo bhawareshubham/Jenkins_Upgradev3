@@ -2,8 +2,10 @@ pipeline {
     agent any
     stages {
         stage('Init') {
-            
-            git url: 'https://github.com/bhawareshubham/Jenkins_Upgradev3.git', branch: 'master'
+            steps {
+                git 'https://github.com/bhawareshubham/Jenkins_Upgradev3.git'
+            }
+           
         }
         
         stage('Build Application') {
