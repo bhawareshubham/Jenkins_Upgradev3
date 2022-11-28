@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    stages {
+        stage('Init') {
+            git 'https://github.com/bhawareshubham/Jenkins_Upgradev3.git'
+        }
+        stage('Build Application') {
+            steps {
+                sh 'mvn -f java-tomcat-sample/pom.xml clean package'
+            }
+            post {
+                success {
+                    echo "Now Archiving the Artifacts...."
+                    junit '**/target/surefire-reports/*.xml'
+                    archiveArtifacts artifacts: '**/*.war'
+                }
+            }
+        }
+        stage('Deploy in Staging Environment'){
+            
+            when {
+              expression {
+                currentBuild.result == null || currentBuild.result == 'SUCCESS' 
+              }
+            }
+            steps {
+                deploy adapters: [tomcat9(credentialsId: '238e33e1-75bf-4103-b279-4d56b85a1f98', path: '', url: 'http://172.31.13.181:9090/')], contextPath: '/', onFailure: false, war: '**/*.war'
+            }
+            
+        }
+        stage('Deploy to Production'){
+            steps{
+                timeout(time:5, unit:'DAYS'){
+                    input message:'Approve PRODUCTION Deployment?'
+                }
+                
+                deploy adapters: [tomcat9(credentialsId: '238e33e1-75bf-4103-b279-4d56b85a1f98', path: '', url: 'http://172.31.13.181:9091/')], contextPath: '/', onFailure: false, war: '**/*.war'
+            
+            }
+        }
+    }
+}
